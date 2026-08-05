@@ -13,4 +13,50 @@ model User {
   email     String   @unique
   password  String
   createdAt DateTime @default(now())
+
+  hashedRefreshToken String?
+
+  interviews Interview[]
+  resumes    Resume[]
+}
+ model Interview {
+  id           String    @id @default(cuid())
+  role         String
+  difficulty   String
+  status       String
+  createdAt    DateTime  @default(now())
+
+  // other fields...
+
+  averageScore Float?
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  questions Question[]
+}
+
+model Question {
+  id            String @id @default(cuid())
+
+  question      String
+  answer        String?
+  correctAnswer String?
+
+  score         Int?
+  feedback      String?
+
+  interviewId String
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+}
+
+model Resume {
+  id         String   @id @default(cuid())
+  fileName   String
+  content    String   @db.Text
+  analysis   String   @db.Text
+  uploadedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
