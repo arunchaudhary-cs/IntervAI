@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+    role      String   @default("USER")
+  createdAt DateTime @default(now())
+
+  hashedRefreshToken String?
+
+  interviews Interview[]
+  resumes    Resume[]
+}
+
+model Interview {
+  id           String    @id @default(cuid())
+
+  role         String
+  difficulty   String
+  status       String
+
+  createdAt    DateTime  @default(now())
+
+  startedAt    DateTime?
+  completedAt  DateTime?
+
+  duration     Int? // minutes
+
+  averageScore Float?
+
+  userId String
+  user   User @relation(fields: [userId], references: [id])
+
+  questions Question[]
+
+  report InterviewReport?
+}
+
+model Question {
+  id String @id @default(cuid())
+
+  question      String
+  answer        String?
+  correctAnswer String?
+
+  score    Int?
+  feedback String?
+
+  interviewId String
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+}
+
+model Resume {
+  id         String   @id @default(cuid())
+  fileName   String
+  content    String   @db.Text
+  analysis   String   @db.Text
+  uploadedAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model InterviewReport {
+  id          String @id @default(uuid())
+  interviewId String @unique
+
+  overallScore Int
+  strengths    String
+  weaknesses   String
+  feedback     String
+  improvements String
+
+  createdAt DateTime @default(now())
+
+  interview Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+}
