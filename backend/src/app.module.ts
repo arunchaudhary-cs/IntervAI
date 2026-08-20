@@ -6,7 +6,7 @@ import {
   ThrottlerModule,
 } from '@nestjs/throttler';
 
-import * as Joi from 'joi';
+import { envValidationSchema } from './config/env.validation';
 
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
@@ -21,20 +21,9 @@ import { UsersModule } from './users/users.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-
-      validationSchema: Joi.object({
-        DATABASE_URL: Joi.string().required(),
-        JWT_SECRET: Joi.string().required(),
-        GEMINI_API_KEY: Joi.string().required(),
-
-        SMTP_HOST: Joi.string().optional(),
-        SMTP_PORT: Joi.number().optional(),
-        SMTP_USER: Joi.string().optional(),
-        SMTP_PASSWORD: Joi.string().optional(),
-        SMTP_FROM: Joi.string().optional(),
-      }),
-    }),
+  isGlobal: true,
+  validationSchema: envValidationSchema,
+  }),
 
     // Global rate limiting configuration
     ThrottlerModule.forRoot([

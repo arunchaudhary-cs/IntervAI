@@ -1,6 +1,6 @@
 import {
-  Injectable,
   BadRequestException,
+  Injectable,
 } from '@nestjs/common';
 
 import pdfParse from 'pdf-parse';
@@ -15,17 +15,37 @@ export class ResumeService {
     private readonly aiService: AiService,
   ) {}
 
+  private validatePdfFile(
+    file: Express.Multer.File | undefined,
+  ) {
+    if (!file) {
+      throw new BadRequestException(
+        'Resume is required.',
+      );
+    }
+
+    const header = file.buffer
+      .subarray(0, 4)
+      .toString('utf8');
+
+    if (header !== '%PDF') {
+      throw new BadRequestException(
+        'The uploaded file is not a valid PDF.',
+      );
+    }
+  }
+
   async upload(
     userId: string,
     file: Express.Multer.File,
   ) {
-    if (!file) {
-      throw new BadRequestException('Resume is required');
-    }
+    this.validatePdfFile(file);
 
     const pdf = await pdfParse(file.buffer);
 
-    const analysis = await this.aiService.analyzeResume(pdf.text);
+    const analysis = await this.aiService.analyzeResume(
+      pdf.text,
+    );
 
     const resume = await this.prisma.resume.create({
       data: {
@@ -48,9 +68,7 @@ export class ResumeService {
     file: Express.Multer.File,
     difficulty: string,
   ) {
-    if (!file) {
-      throw new BadRequestException('Resume is required');
-    }
+    this.validatePdfFile(file);
 
     const pdf = await pdfParse(file.buffer);
 
@@ -65,14 +83,14 @@ export class ResumeService {
         data: {
           role: result.role,
           difficulty,
-          status: 'PENDING', // <-- Added
+          status: 'PENDING',
           userId,
         },
       });
 
     await this.prisma.question.createMany({
-      data: result.questions.map((q: any) => ({
-        question: q.question,
+      data: result.questions.map((question: any) => ({
+        question: question.question,
         interviewId: interview.id,
       })),
     });

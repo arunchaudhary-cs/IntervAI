@@ -1,11 +1,11 @@
 import {
   Injectable,
-  NotFoundException,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ReportsService {
@@ -14,11 +14,15 @@ export class ReportsService {
     private readonly aiService: AiService,
   ) {}
 
-  async generateReport(interviewId: string) {
+  async generateReport(
+    interviewId: string,
+    userId: string,
+  ) {
     const interview =
-      await this.prisma.interview.findUnique({
+      await this.prisma.interview.findFirst({
         where: {
           id: interviewId,
+          userId,
         },
         include: {
           questions: true,
@@ -27,7 +31,7 @@ export class ReportsService {
 
     if (!interview) {
       throw new NotFoundException(
-        'Interview not found',
+        'Interview not found.',
       );
     }
 
@@ -49,19 +53,19 @@ ${JSON.stringify(interview.questions)}
 Return ONLY JSON.
 
 {
-  "overallScore":85,
-  "strengths":"...",
-  "weaknesses":"...",
-  "feedback":"...",
-  "improvements":"..."
+  "overallScore": 85,
+  "strengths": "...",
+  "weaknesses": "...",
+  "feedback": "...",
+  "improvements": "..."
 }
+
+The overallScore must be a whole number from 0 to 100.
 `;
 
     try {
       const response =
-        await this.aiService.generateReport(
-          prompt,
-        );
+        await this.aiService.generateReport(prompt);
 
       const cleaned = response
         .replace(/```json/g, '')
@@ -71,13 +75,11 @@ Return ONLY JSON.
       const report = JSON.parse(cleaned);
 
       const existing =
-        await this.prisma.interviewReport.findUnique(
-          {
-            where: {
-              interviewId,
-            },
+        await this.prisma.interviewReport.findUnique({
+          where: {
+            interviewId,
           },
-        );
+        });
 
       if (existing) {
         return this.prisma.interviewReport.update({
@@ -85,16 +87,11 @@ Return ONLY JSON.
             interviewId,
           },
           data: {
-            overallScore:
-              report.overallScore,
-            strengths:
-              report.strengths,
-            weaknesses:
-              report.weaknesses,
-            feedback:
-              report.feedback,
-            improvements:
-              report.improvements,
+            overallScore: report.overallScore,
+            strengths: report.strengths,
+            weaknesses: report.weaknesses,
+            feedback: report.feedback,
+            improvements: report.improvements,
           },
         });
       }
@@ -102,28 +99,18 @@ Return ONLY JSON.
       return this.prisma.interviewReport.create({
         data: {
           interviewId,
-
-          overallScore:
-            report.overallScore,
-
-          strengths:
-            report.strengths,
-
-          weaknesses:
-            report.weaknesses,
-
-          feedback:
-            report.feedback,
-
-          improvements:
-            report.improvements,
+          overallScore: report.overallScore,
+          strengths: report.strengths,
+          weaknesses: report.weaknesses,
+          feedback: report.feedback,
+          improvements: report.improvements,
         },
       });
     } catch (error) {
       console.error(error);
 
       throw new InternalServerErrorException(
-        'Failed to generate report.',
+        'Failed to generate interview report.',
       );
     }
   }

@@ -210,10 +210,12 @@ ${answer}
 Return ONLY JSON.
 
 {
-  "score":8,
+  "score":80,
   "feedback":"Good answer",
   "correctAnswer":"Correct explanation"
 }
+
+The score must be a whole number from 0 to 100.
 `;
 
     try {

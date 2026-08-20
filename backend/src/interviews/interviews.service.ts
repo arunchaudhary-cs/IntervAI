@@ -1,30 +1,31 @@
 import {
-  Injectable,
-  NotFoundException,
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
+  NotFoundException,
 } from '@nestjs/common';
 
-import { PrismaService } from '../prisma/prisma.service';
-import { CreateInterviewDto } from './dto/create-interview.dto';
 import { AiService } from '../ai/ai.service';
-import { ReportsService } from '../reports/reports.service';
 import { EmailService } from '../email/email.service';
+import { PrismaService } from '../prisma/prisma.service';
+import { ReportsService } from '../reports/reports.service';
+import { normalizeScore } from '../common/constants/score.constants';
+
+import { CreateInterviewDto } from './dto/create-interview.dto';
 
 @Injectable()
 export class InterviewsService {
-  
-    constructor(
-  private readonly prisma: PrismaService,
-  private readonly aiService: AiService,
-  private readonly reportsService: ReportsService,
-  private readonly emailService: EmailService,
-) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly aiService: AiService,
+    private readonly reportsService: ReportsService,
+    private readonly emailService: EmailService,
+  ) {}
 
-  // ---------------------------------
-  // Create Interview
-  // ---------------------------------
-  async create(userId: string, dto: CreateInterviewDto) {
+  async create(
+    userId: string,
+    dto: CreateInterviewDto,
+  ) {
     try {
       const interview = await this.prisma.interview.create({
         data: {
@@ -35,14 +36,15 @@ export class InterviewsService {
         },
       });
 
-      const questions = await this.aiService.generateQuestions(
-        dto.role,
-        dto.difficulty,
-      );
+      const questions =
+        await this.aiService.generateQuestions(
+          dto.role,
+          dto.difficulty,
+        );
 
       await this.prisma.question.createMany({
-        data: questions.map((q: any) => ({
-          question: q.question,
+        data: questions.map((question: any) => ({
+          question: question.question,
           interviewId: interview.id,
         })),
       });
@@ -59,14 +61,11 @@ export class InterviewsService {
       console.error(error);
 
       throw new InternalServerErrorException(
-        'Failed to create interview',
+        'Failed to create interview.',
       );
     }
   }
 
-  // ---------------------------------
-  // Start Interview
-  // ---------------------------------
   async startInterview(
     interviewId: string,
     userId: string,
@@ -81,14 +80,18 @@ export class InterviewsService {
 
     if (!interview) {
       throw new NotFoundException(
-        'Interview not found',
+        'Interview not found.',
       );
     }
 
-    if (interview.status !== 'PENDING') {
+    if (interview.status === 'COMPLETED') {
       throw new BadRequestException(
-        'Interview already started.',
+        'Interview is already completed.',
       );
+    }
+
+    if (interview.status === 'IN_PROGRESS') {
+      return interview;
     }
 
     return this.prisma.interview.update({
@@ -103,9 +106,6 @@ export class InterviewsService {
     });
   }
 
-  // ---------------------------------
-  // Submit Answer
-  // ---------------------------------
   async submitAnswer(
     interviewId: string,
     questionId: string,
@@ -122,7 +122,13 @@ export class InterviewsService {
 
     if (!interview) {
       throw new NotFoundException(
-        'Interview not found',
+        'Interview not found.',
+      );
+    }
+
+    if (interview.status !== 'IN_PROGRESS') {
+      throw new BadRequestException(
+        'This interview is not in progress.',
       );
     }
 
@@ -133,9 +139,9 @@ export class InterviewsService {
         },
       });
 
-    if (!question) {
+    if (!question || question.interviewId !== interviewId) {
       throw new NotFoundException(
-        'Question not found',
+        'Question not found.',
       );
     }
 
@@ -151,17 +157,13 @@ export class InterviewsService {
       },
       data: {
         answer,
-        score: evaluation.score,
+        score: normalizeScore(evaluation.score),
         feedback: evaluation.feedback,
-        correctAnswer:
-          evaluation.correctAnswer,
+        correctAnswer: evaluation.correctAnswer,
       },
     });
   }
 
-  // ---------------------------------
-  // Finish Interview
-  // ---------------------------------
   async finishInterview(
     interviewId: string,
     userId: string,
@@ -179,21 +181,28 @@ export class InterviewsService {
 
     if (!interview) {
       throw new NotFoundException(
-        'Interview not found',
+        'Interview not found.',
       );
+    }
+
+    if (interview.status === 'COMPLETED') {
+      return {
+        message: 'Interview is already completed.',
+        averageScore: interview.averageScore ?? 0,
+      };
     }
 
     let total = 0;
     let answered = 0;
 
-    for (const q of interview.questions) {
-      if (q.score !== null) {
-        total += q.score;
+    for (const question of interview.questions) {
+      if (question.score !== null) {
+        total += question.score;
         answered++;
       }
     }
 
-    const average =
+    const averageScore =
       answered === 0 ? 0 : total / answered;
 
     await this.prisma.interview.update({
@@ -203,38 +212,36 @@ export class InterviewsService {
       data: {
         status: 'COMPLETED',
         completedAt: new Date(),
-        averageScore: average,
+        averageScore,
       },
     });
 
     await this.reportsService.generateReport(
       interviewId,
+      userId,
     );
-    const user = await this.prisma.user.findUnique({
-  where: {
-    id: userId,
-  },
-});
 
-if (user) {
-  await this.emailService.sendInterviewCompletedEmail(
-    user.email,
-    user.name,
-    interview.role,
-    Math.round(average),
-  );
-}
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+
+    if (user) {
+      await this.emailService.sendInterviewCompletedEmail(
+        user.email,
+        user.name,
+        interview.role,
+        Math.round(averageScore),
+      );
+    }
 
     return {
-      message:
-        'Interview completed successfully.',
-      averageScore: average,
+      message: 'Interview completed successfully.',
+      averageScore,
     };
   }
 
-  // ---------------------------------
-  // Result
-  // ---------------------------------
   async getResult(
     id: string,
     userId: string,
@@ -253,16 +260,13 @@ if (user) {
 
     if (!interview) {
       throw new NotFoundException(
-        'Interview not found',
+        'Interview not found.',
       );
     }
 
     return interview;
   }
 
-  // ---------------------------------
-  // List Interviews
-  // ---------------------------------
   async findAll(userId: string) {
     return this.prisma.interview.findMany({
       where: {
@@ -278,37 +282,31 @@ if (user) {
     });
   }
 
-  // ---------------------------------
-  // Find One
-  // ---------------------------------
   async findOne(
-  id: string,
-  userId: string,
-) {
-  const interview =
-    await this.prisma.interview.findFirst({
-      where: {
-        id,
-        userId,
-      },
-      include: {
-        questions: true,
-        report: true,
-      },
-    });
+    id: string,
+    userId: string,
+  ) {
+    const interview =
+      await this.prisma.interview.findFirst({
+        where: {
+          id,
+          userId,
+        },
+        include: {
+          questions: true,
+          report: true,
+        },
+      });
 
-  if (!interview) {
-    throw new NotFoundException(
-      'Interview not found',
-    );
+    if (!interview) {
+      throw new NotFoundException(
+        'Interview not found.',
+      );
+    }
+
+    return interview;
   }
 
-  return interview;
-}
-
-  // ---------------------------------
-  // Delete
-  // ---------------------------------
   async remove(
     id: string,
     userId: string,
