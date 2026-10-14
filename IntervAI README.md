@@ -1,93 +1,155 @@
-
 # IntervAI — AI-Powered Interview Preparation
 
-IntervAI is a full-stack web application designed to help users prepare for technical interviews using AI-powered assistance.
-
-## Overview
-
-IntervAI combines a modern web frontend with a backend API, AI integration, and database access to provide an interactive interview preparation experience.
+IntervAI is a full-stack web application designed to help users prepare for interviews through an interactive web interface and AI-powered assistance.
 
 ## Technology Stack
 
-- **Frontend:** React, Vite, TypeScript (if used in the current implementation)
+- **Frontend:** React, Vite, JavaScript/TypeScript
 - **Backend:** NestJS, Node.js, TypeScript
-- **AI Integration:** Google Gemini API using Google GenAI
 - **Database:** PostgreSQL
 - **ORM:** Prisma
-- **Development Environment:** Docker, where required
+- **AI Integration:** Google Gemini API
+- **Authentication:** JWT and bcrypt dependencies
+- **Containerization:** Docker and Docker Compose
 
-## Features
+## Project Architecture
 
-List the features implemented in the current version, such as:
-
-- Interactive interview preparation interface
-- AI-assisted interview question generation
-- AI-generated responses or feedback
-- Backend API for application functionality
-- Database integration using Prisma and PostgreSQL
-
-Only retain features that you have tested successfully.
+- **Frontend:** Provides the user interface and communicates with the backend API.
+- **Backend:** Handles application requests, business logic, and AI integration.
+- **PostgreSQL:** Stores application data.
+- **Prisma:** Provides database access through the configured schema and client.
+- **Gemini API:** Supports AI functionality using a server-side API key.
+- **Docker Compose:** Starts the PostgreSQL database and backend service for local development.
 
 ## Project Structure
 
 ```text
 IntervAI/
-├── frontend/       # React frontend
-├── backend/        # NestJS API
+├── frontend/
+│   ├── src/
+│   ├── public/
+│   └── package.json
+├── backend/
+│   ├── src/
+│   ├── prisma/
+│   ├── Dockerfile
+│   ├── docker-compose.yml
+│   └── package.json
 ├── README.md
 └── .gitignore
 ```
 
-Additional Docker and Prisma configuration files are maintained wherever required by the project.
+The Dockerfile and Compose file locations may differ in the actual repository.
 
 ## Prerequisites
 
 - Node.js and npm
-- Docker Desktop and Docker Compose, if required by the configured services
-- A PostgreSQL database
+- Docker Desktop with Docker Compose
 - A Google Gemini API key
+- Git
 
-## Environment Configuration
+## Getting Started
 
-Configure the environment variables required by the frontend and backend.
+### 1. Clone the repository
 
-Typical backend configuration may include:
-
-```env
-DATABASE_URL=your_postgresql_connection_string
-GEMINI_API_KEY=your_gemini_api_key
-PORT=3000
+```bash
+git clone https://github.com/arunchaudhary-cs/IntervAI.git
+cd IntervAI
 ```
 
-Use the exact variable names and port expected by the application. Keep real credentials in local environment files or your hosting provider's environment settings. Never commit secrets to GitHub.
+### 2. Configure environment variables
 
-## Running the Project
+Create a `.env` file in the directory from which Docker Compose reads its configuration.
 
-1. Clone the repository.
-2. Install dependencies in the frontend and backend directories.
-3. Configure the required environment variables.
-4. Start any required database or supporting services using the project's Docker configuration.
-5. Run the backend and frontend using their respective package scripts.
-6. Open the local frontend URL shown by the development server.
+Configure the required variables:
 
-Consult the actual Docker Compose configuration and package scripts for the exact startup commands.
+```env
+JWT_SECRET=replace_with_a_secure_random_secret
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+The backend also requires a valid database connection. The local Docker Compose configuration supplies `DATABASE_URL` to the backend service.
+
+Never commit real credentials or `.env` files to GitHub.
+
+### 3. Start the backend and database
+
+Navigate to the directory containing the Docker Compose file, then run:
+
+```bash
+docker compose up --build -d
+```
+
+This starts the PostgreSQL and backend services defined in the Compose configuration.
+
+To inspect service status:
+
+```bash
+docker compose ps
+```
+
+To view backend logs:
+
+```bash
+docker compose logs -f backend
+```
+
+To stop the services:
+
+```bash
+docker compose down
+```
+
+### 4. Start the frontend
+
+Open a separate terminal and navigate to the frontend directory:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open the local URL printed by Vite in your terminal.
+
+Ensure the frontend API configuration points to the running backend. The local backend port in the provided Docker configuration is `3000`.
+
+## Environment Variables
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Secret used for JWT-related functionality |
+| `GEMINI_API_KEY` | Server-side Gemini API authentication |
+
+Use the exact variable names required by the application.
 
 ## Deployment
 
-The frontend and backend can be deployed as separate services, provided the production configuration supports the required database and AI integrations.
+The frontend and backend can be deployed separately.
 
-Production setup must include the correct API URL, database connection, environment variables, and CORS configuration.
+A production deployment requires:
+
+- A hosted frontend
+- A publicly reachable backend API
+- A production PostgreSQL database
+- Correct production environment variables
+- Appropriate CORS configuration
+- A frontend API URL pointing to the deployed backend
+- Working database migrations and AI integration
+
+Local Docker networking and database credentials must not be reused blindly in production.
 
 ## Security
 
-- Do not commit `.env` files or API keys.
-- Validate inputs received by backend endpoints.
-- Configure CORS for the intended frontend origin.
-- Use secure environment-variable management in production.
+- Keep API keys and passwords out of source control.
+- Use secure production environment variables.
+- Use a strong JWT secret.
+- Configure database access appropriately.
+- Validate API inputs and handle errors safely.
 
 ## Author
 
-Arun Chaudhary
+**Arun Chaudhary**
 
 GitHub: https://github.com/arunchaudhary-cs
-
