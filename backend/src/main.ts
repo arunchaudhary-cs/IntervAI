@@ -22,9 +22,18 @@ async function bootstrap() {
   // Compression
   app.use(compression());
 
-  // CORS
+  // CORS: use an explicit comma-separated allowlist in deployed environments.
+  const allowedOrigins = (
+    process.env.CORS_ORIGINS ||
+    process.env.FRONTEND_URL ||
+    'http://localhost:5173'
+  )
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.enableCors({
-    origin: '*',
+    origin: allowedOrigins,
     credentials: true,
   });
 
