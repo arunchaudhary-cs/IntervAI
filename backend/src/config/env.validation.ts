@@ -1,4 +1,3 @@
-
 import * as Joi from 'joi';
 
 export const envValidationSchema = Joi.object({
@@ -25,6 +24,8 @@ export const envValidationSchema = Joi.object({
   FRONTEND_URL: Joi.string()
     .uri()
     .default('http://localhost:5173'),
+
+  CORS_ORIGINS: Joi.string().optional(),
 
   SMTP_HOST: Joi.string().optional(),
   SMTP_PORT: Joi.number().optional(),
