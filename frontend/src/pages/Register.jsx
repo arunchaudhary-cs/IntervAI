@@ -43,7 +43,11 @@ function Register() {
         },
       );
 
-      navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+      if (response.data?.requiresVerification) {
+        navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`);
+      } else {
+        navigate('/login?registered=true');
+      }
     } catch (err) {
       setError(
         err.response?.data?.message ||

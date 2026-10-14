@@ -36,34 +36,42 @@ export class AuthService {
     const otp = this.generateOtp();
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
+    const hasSmtp = Boolean(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASSWORD,
+    );
+
     try {
       const user = await this.prisma.user.create({
         data: {
           name: registerDto.name,
           email: registerDto.email.toLowerCase().trim(),
           password: hashedPassword,
-          isEmailVerified: false,
-          emailVerificationToken: otp,
-          emailVerificationExpires: expiresAt,
+          isEmailVerified: !hasSmtp,
+          emailVerificationToken: hasSmtp ? otp : null,
+          emailVerificationExpires: hasSmtp ? expiresAt : null,
         },
       });
 
-      // Send verification email
-      await this.emailService.sendVerificationOtp(
-        user.email,
-        user.name,
-        otp,
-      );
+      // Send verification email only if SMTP is configured
+      if (hasSmtp) {
+        await this.emailService.sendVerificationOtp(
+          user.email,
+          user.name,
+          otp,
+        );
+      }
 
       const { password, hashedRefreshToken, emailVerificationToken, ...result } =
         user;
 
       return {
         ...result,
-        requiresVerification: true,
-        message:
-          'Registration successful! We have sent a 6-digit verification code to your email.',
-        // included for dev convenience
+        requiresVerification: hasSmtp,
+        message: hasSmtp
+          ? 'Registration successful! We have sent a 6-digit verification code to your email.'
+          : 'Registration successful! You can now log in.',
         devOtpHint: process.env.NODE_ENV !== 'production' ? otp : undefined,
       };
     } catch (error) {
@@ -291,8 +299,14 @@ export class AuthService {
       );
     }
 
-    // Enforce email verification check
-    if (!user.isEmailVerified) {
+    const hasSmtp = Boolean(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASSWORD,
+    );
+
+    // Enforce email verification check only when SMTP is configured
+    if (hasSmtp && !user.isEmailVerified) {
       // Auto-refresh OTP if needed
       const otp = this.generateOtp();
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);

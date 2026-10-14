@@ -23,15 +23,10 @@ async function bootstrap() {
   app.use(compression());
 
   // CORS: supports specific domains or wildcard reflection for preview/production deployments
-  const rawOrigins =
-    process.env.CORS_ORIGINS ||
-    process.env.FRONTEND_URL ||
-    'http://localhost:5173';
+  const rawOrigins = process.env.CORS_ORIGINS || process.env.FRONTEND_URL;
 
-  let corsOrigin: any;
-  if (rawOrigins.includes('*')) {
-    corsOrigin = true;
-  } else {
+  let corsOrigin: any = true; // Default: allow all origins so requests from Vercel never fail
+  if (rawOrigins && rawOrigins !== '*') {
     corsOrigin = rawOrigins
       .split(',')
       .map((origin) => origin.trim())
