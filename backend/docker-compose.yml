@@ -1,53 +1,42 @@
 services:
-
   postgres:
     image: postgres:16-alpine
-
     container_name: intervai-postgres
-
     restart: unless-stopped
-
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: intervai
-
     ports:
       - "5432:5432"
-
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d intervai"]
       interval: 5s
       timeout: 5s
       retries: 5
 
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-
     container_name: intervai-backend
-
     restart: unless-stopped
-
     ports:
       - "3000:3000"
-
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/intervai?schema=public
-
-      JWT_SECRET: ${JWT_SECRET}
-
-      GEMINI_API_KEY: ${GEMINI_API_KEY}
-
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in backend/.env}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET in backend/.env}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:?Set GEMINI_API_KEY in backend/.env}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:5173}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: 3000
     depends_on:
       postgres:
         condition: service_healthy
-
 
 volumes:
   postgres_data:
