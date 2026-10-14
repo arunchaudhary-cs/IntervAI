@@ -19,7 +19,8 @@ export class RegisterDto {
     example: 'arun@gmail.com',
     description: 'Email address',
   })
-  @IsEmail()
+  @IsEmail({}, { message: 'Please enter a valid email address (e.g. name@domain.com)' })
+  @IsNotEmpty({ message: 'Email is required' })
   email: string;
 
   @ApiProperty({

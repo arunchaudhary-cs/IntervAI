@@ -88,6 +88,7 @@ export class ResumeController {
       req.user.userId,
       file,
       dto.difficulty,
+      dto.mode,
     );
   }
 }

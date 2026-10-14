@@ -1,4 +1,4 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateInterviewDto {
@@ -16,4 +16,14 @@ export class CreateInterviewDto {
   @IsString()
   @IsIn(['Easy', 'Medium', 'Hard'])
   difficulty: string;
+
+  @ApiProperty({
+    example: 'VOICE',
+    enum: ['VOICE', 'TEXT'],
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  @IsIn(['VOICE', 'TEXT'])
+  mode?: string;
 }

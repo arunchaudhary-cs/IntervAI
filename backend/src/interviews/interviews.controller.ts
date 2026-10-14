@@ -108,4 +108,15 @@ export class InterviewsController {
       req.user.userId,
     );
   }
+
+  @Post(':id/tab-switch')
+  logTabSwitch(
+    @Param('id') id: string,
+    @Request() req,
+  ) {
+    return this.interviewsService.logTabSwitch(
+      id,
+      req.user.userId,
+    );
+  }
 }

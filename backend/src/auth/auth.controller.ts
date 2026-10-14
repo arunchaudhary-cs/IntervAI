@@ -19,6 +19,10 @@ import { AuthService } from './auth.service';
 
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { VerifyEmailDto } from './dto/verify-email.dto';
+import { ResendVerificationDto } from './dto/resend-verification.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { RefreshAuthGuard } from './refresh-auth.guard';
@@ -49,6 +53,94 @@ export class AuthController {
   ) {
     return this.authService.register(
       registerDto,
+    );
+  }
+
+  // ---------------------------------
+  // Verify Email
+  // ---------------------------------
+
+  @ApiOperation({
+    summary: 'Verify user email with 6-digit OTP',
+  })
+  @Post('verify-email')
+  @Throttle({
+    default: {
+      limit: 10,
+      ttl: 60000,
+    },
+  })
+  verifyEmail(
+    @Body() verifyEmailDto: VerifyEmailDto,
+  ) {
+    return this.authService.verifyEmail(
+      verifyEmailDto,
+    );
+  }
+
+  // ---------------------------------
+  // Resend Verification Code
+  // ---------------------------------
+
+  @ApiOperation({
+    summary: 'Resend email verification code',
+  })
+  @Post('resend-verification')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
+  resendVerification(
+    @Body() resendDto: ResendVerificationDto,
+  ) {
+    return this.authService.resendVerification(
+      resendDto,
+    );
+  }
+
+  // ---------------------------------
+  // Forgot Password
+  // ---------------------------------
+
+  @ApiOperation({
+    summary: 'Request password reset OTP code',
+  })
+  @Post('forgot-password')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
+  forgotPassword(
+    @Body() forgotPasswordDto: ForgotPasswordDto,
+  ) {
+    return this.authService.forgotPassword(
+      forgotPasswordDto,
+    );
+  }
+
+  // ---------------------------------
+  // Reset Password
+  // ---------------------------------
+
+  @ApiOperation({
+    summary: 'Reset password using OTP code',
+  })
+  @Post('reset-password')
+  @Throttle({
+    default: {
+      limit: 5,
+      ttl: 60000,
+    },
+  })
+  resetPassword(
+    @Body() resetPasswordDto: ResetPasswordDto,
+  ) {
+    return this.authService.resetPassword(
+      resetPasswordDto,
     );
   }
 

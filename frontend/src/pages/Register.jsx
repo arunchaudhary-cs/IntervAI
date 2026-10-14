@@ -34,21 +34,20 @@ function Register() {
     setLoading(true);
 
     try {
-      await api.post(
+      const response = await api.post(
         '/auth/register',
         {
-          name,
-          email,
+          name: name.trim(),
+          email: email.trim(),
           password,
         },
       );
 
-      navigate('/login');
-
+      navigate(`/verify-email?email=${encodeURIComponent(email.trim())}`);
     } catch (err) {
       setError(
         err.response?.data?.message ||
-        'Registration failed',
+        'Registration failed. Please check your information.',
       );
     } finally {
       setLoading(false);

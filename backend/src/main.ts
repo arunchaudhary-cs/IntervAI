@@ -22,18 +22,24 @@ async function bootstrap() {
   // Compression
   app.use(compression());
 
-  // CORS: use an explicit comma-separated allowlist in deployed environments.
-  const allowedOrigins = (
+  // CORS: supports specific domains or wildcard reflection for preview/production deployments
+  const rawOrigins =
     process.env.CORS_ORIGINS ||
     process.env.FRONTEND_URL ||
-    'http://localhost:5173'
-  )
-    .split(',')
-    .map((origin) => origin.trim())
-    .filter(Boolean);
+    'http://localhost:5173';
+
+  let corsOrigin: any;
+  if (rawOrigins.includes('*')) {
+    corsOrigin = true;
+  } else {
+    corsOrigin = rawOrigins
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+  }
 
   app.enableCors({
-    origin: allowedOrigins,
+    origin: corsOrigin,
     credentials: true,
   });
 

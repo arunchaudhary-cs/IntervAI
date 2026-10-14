@@ -67,6 +67,7 @@ export class ResumeService {
     userId: string,
     file: Express.Multer.File,
     difficulty: string,
+    modeParam?: string,
   ) {
     this.validatePdfFile(file);
 
@@ -78,11 +79,16 @@ export class ResumeService {
         difficulty,
       );
 
+    const mode = modeParam === 'VOICE' ? 'VOICE' : 'TEXT';
+    const duration = mode === 'VOICE' ? 15 : 30;
+
     const interview =
       await this.prisma.interview.create({
         data: {
           role: result.role,
           difficulty,
+          mode,
+          duration,
           status: 'PENDING',
           userId,
         },

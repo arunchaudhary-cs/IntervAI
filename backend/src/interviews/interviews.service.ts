@@ -27,10 +27,15 @@ export class InterviewsService {
     dto: CreateInterviewDto,
   ) {
     try {
+      const mode = dto.mode === 'VOICE' ? 'VOICE' : 'TEXT';
+      const duration = mode === 'VOICE' ? 15 : 30; // 15 minutes for voice (including follow-ups)
+
       const interview = await this.prisma.interview.create({
         data: {
           role: dto.role,
           difficulty: dto.difficulty,
+          mode,
+          duration,
           status: 'PENDING',
           userId,
         },
@@ -94,6 +99,8 @@ export class InterviewsService {
       return interview;
     }
 
+    const duration = interview.mode === 'VOICE' ? 15 : (interview.duration || 30);
+
     return this.prisma.interview.update({
       where: {
         id: interviewId,
@@ -101,7 +108,24 @@ export class InterviewsService {
       data: {
         status: 'IN_PROGRESS',
         startedAt: new Date(),
-        duration: 30,
+        duration,
+      },
+    });
+  }
+
+  async logTabSwitch(interviewId: string, userId: string) {
+    const interview = await this.prisma.interview.findFirst({
+      where: { id: interviewId, userId },
+    });
+
+    if (!interview) {
+      throw new NotFoundException('Interview not found.');
+    }
+
+    return this.prisma.interview.update({
+      where: { id: interviewId },
+      data: {
+        tabSwitches: { increment: 1 },
       },
     });
   }
@@ -160,6 +184,7 @@ export class InterviewsService {
         score: normalizeScore(evaluation.score),
         feedback: evaluation.feedback,
         correctAnswer: evaluation.correctAnswer,
+        followUp: evaluation.followUpQuestion,
       },
     });
   }
@@ -196,14 +221,15 @@ export class InterviewsService {
     let answered = 0;
 
     for (const question of interview.questions) {
-      if (question.score !== null) {
+      if (question.score !== null && question.score !== undefined) {
         total += question.score;
         answered++;
       }
     }
 
+    const totalQuestions = interview.questions.length || 1;
     const averageScore =
-      answered === 0 ? 0 : total / answered;
+      answered === 0 ? 0 : Number((total / totalQuestions).toFixed(1));
 
     await this.prisma.interview.update({
       where: {

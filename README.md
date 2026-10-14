@@ -1,34 +1,47 @@
 # IntervAI — AI-Powered Mock Interview Platform
 
-IntervAI is a full-stack application for practising job interviews with AI-generated questions and feedback. It combines a React frontend, a NestJS REST API, PostgreSQL persistence through Prisma, and Google's Gemini API.
+IntervAI is an intelligent full-stack mock interview platform designed to help candidates prepare for technical job interviews. Powered by Google's Gemini AI, it dynamically generates role-specific interview questions, analyzes user responses, tracks assessment integrity, and produces comprehensive evaluation reports with actionable feedback.
 
-## Features
+---
 
-- User registration and login with token-based authentication
-- Create and manage interview sessions
-- AI-assisted interview questions and responses
-- Interview results and reports
-- Resume-related workflows
-- API documentation through Swagger
+## 🌟 Key Features
 
-> AI output depends on the configured Gemini API key and should be treated as practice feedback, not a hiring decision.
+- **Dynamic AI Interview Generation**: Generates role-specific questions across Frontend, Backend, Fullstack, DevOps, and System Design with configurable difficulty levels (Junior, Mid, Senior).
+- **Dual Assessment Modes**:
+  - 🎙️ **Voice Mode**: Real-time interactive voice assessment using speech recognition and dynamic audio visualization.
+  - ⌨️ **Text / Written Mode**: Timed technical assessment environment with structured answer editors.
+- **AI Feedback & Performance Scoring**: Evaluates candidate answers on accuracy, depth, and communication, providing strengths, weaknesses, and model answers.
+- **Proctoring & Integrity Tracking**: Detects and logs browser tab switches during interviews to assess candidate focus.
+- **Secure Authentication & Account Recovery**: JWT access/refresh token authentication, email verification, and secure OTP-based password resets.
+- **Interactive Swagger Documentation**: Comprehensive interactive REST API docs at `/api`.
 
-## Tech stack
+---
 
-| Layer | Technologies |
-| --- | --- |
-| Frontend | React 19, Vite, React Router, Axios |
-| Backend | NestJS 11, TypeScript, REST API |
-| Database | PostgreSQL, Prisma ORM |
-| AI | Google GenAI SDK / Gemini |
-| Local services | Docker Compose |
+## 🏗️ Architecture & Monorepo Structure
 
-## Repository structure
+IntervAI contains both the Frontend and Backend components within this single unified repository:
 
 ```text
 IntervAI/
-├── frontend/          # React + Vite application
-└── backend/            # NestJS API, Prisma schema/migrations, Docker setup
+├── frontend/                  # React 19 + Vite Single Page Application
+│   ├── src/
+│   │   ├── pages/             # Dashboard, Interview, Results, Auth, etc.
+│   │   ├── services/          # Axios API client & interceptors
+│   │   └── App.jsx            # Router and navigation
+│   └── package.json
+│
+├── backend/                   # NestJS 11 REST API Application
+│   ├── src/
+│   │   ├── ai/                # Google Gemini GenAI integration
+│   │   ├── auth/              # JWT auth, verification & password reset
+│   │   ├── interviews/        # Interview session orchestration
+│   │   ├── reports/           # AI report evaluation engine
+│   │   └── main.ts            # Entrypoint & Swagger setup
+│   ├── prisma/                # PostgreSQL schema & migrations
+│   ├── Dockerfile             # Multi-stage production container
+│   └── package.json
+│
+└── README.md
 ```
 
 ## Prerequisites

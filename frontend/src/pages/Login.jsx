@@ -41,9 +41,15 @@ function Login() {
 
       navigate('/dashboard');
     } catch (err) {
+      const errorData = err.response?.data;
+      if (errorData?.emailNotVerified) {
+        navigate(`/verify-email?email=${encodeURIComponent(errorData.email || email)}`);
+        return;
+      }
+
       setError(
-        err.response?.data?.message ||
-          'Login failed',
+        errorData?.message ||
+          'Login failed. Please check your credentials.',
       );
     } finally {
       setLoading(false);
@@ -89,6 +95,12 @@ function Login() {
             }
             required
           />
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-5px' }}>
+            <Link to="/forgot-password" style={{ fontSize: '13px', color: '#4f46e5', textDecoration: 'none' }}>
+              Forgot Password?
+            </Link>
+          </div>
 
           <button
             type="submit"
