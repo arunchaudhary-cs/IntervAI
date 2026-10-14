@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  OnModuleInit,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -16,12 +17,42 @@ import { Prisma } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
     private emailService: EmailService,
   ) {}
+
+  async onModuleInit() {
+    await this.seedDemoAccount();
+  }
+
+  async seedDemoAccount() {
+    try {
+      const email = 'demo@intervai.com';
+      const password = 'Demo@123456';
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      await this.prisma.user.upsert({
+        where: { email },
+        update: {
+          password: hashedPassword,
+          isEmailVerified: true,
+        },
+        create: {
+          name: 'Demo Candidate',
+          email,
+          password: hashedPassword,
+          isEmailVerified: true,
+          role: 'USER',
+        },
+      });
+      console.log('✅ Demo account ready: demo@intervai.com / Demo@123456');
+    } catch (error) {
+      console.warn('⚠️ Could not seed demo account:', error.message);
+    }
+  }
 
   private generateOtp(): string {
     return Math.floor(100000 + Math.random() * 900000).toString();

@@ -81,6 +81,44 @@ function Login() {
           </div>
         )}
 
+        <div style={{
+          background: '#f8fafc',
+          border: '1px dashed #cbd5e1',
+          borderRadius: '8px',
+          padding: '12px 14px',
+          marginBottom: '18px',
+          textAlign: 'left'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>⚡ Demo Account</div>
+              <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
+                demo@intervai.com • Demo@123456
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setEmail('demo@intervai.com');
+                setPassword('Demo@123456');
+                setError('');
+              }}
+              style={{
+                background: '#4f46e5',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '12px',
+                fontWeight: '600',
+                cursor: 'pointer'
+              }}
+            >
+              Fill Credentials
+            </button>
+          </div>
+        </div>
+
         <form onSubmit={handleLogin}>
 
           <input
